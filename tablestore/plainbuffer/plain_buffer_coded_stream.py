@@ -1,13 +1,15 @@
 # -*- coding: utf8 -*-
 
 import sys
+import six
 import struct
+from builtins import int
 from tablestore.const import *
 from tablestore.metadata import *
 from tablestore.error import *
-from plain_buffer_consts import *
-from plain_buffer_crc8 import *
-from plain_buffer_consts import *
+from .plain_buffer_consts import *
+from .plain_buffer_crc8 import *
+from .plain_buffer_consts import *
 
 class PlainBufferCodedInputStream(object):
     def __init__(self, input_stream):
@@ -29,7 +31,7 @@ class PlainBufferCodedInputStream(object):
         if not self.check_last_tag_was(TAG_CELL_VALUE):
             raise OTSClientError("Expect TAG_CELL_VALUE but it was " + str(self.get_last_tag()))
 
-        self.input_stream.read_raw_little_endian32()
+        self.input_stream.read_raw_little_endian32()        
         column_type = ord(self.input_stream.read_raw_byte())
         if column_type == VT_INTEGER:
             int64_value = self.input_stream.read_int64()
@@ -77,12 +79,12 @@ class PlainBufferCodedInputStream(object):
             return (string_value, cell_check_sum)
         elif column_type == VT_BLOB:
             value_size = self.input_stream.read_int32() 
-            binary_value = self.input_stream.read_bytes(value_size)
+            binary_value = self.input_stream.read_bytes(value_size)            
             cell_check_sum = PlainBufferCrc8.crc_int8(cell_check_sum, VT_BLOB)
             cell_check_sum = PlainBufferCrc8.crc_int32(cell_check_sum, value_size)
             cell_check_sum = PlainBufferCrc8.crc_string(cell_check_sum, binary_value)            
             self.read_tag()
-            return (binary_value, cell_check_sum)
+            return (bytearray(binary_value), cell_check_sum)
         elif column_type == VT_BOOLEAN:
             bool_value = self.input_stream.read_boolean()
             cell_check_sum = PlainBufferCrc8.crc_int8(cell_check_sum, VT_BOOLEAN)
@@ -94,7 +96,13 @@ class PlainBufferCodedInputStream(object):
             cell_check_sum = PlainBufferCrc8.crc_int8(cell_check_sum, VT_DOUBLE)
             cell_check_sum = PlainBufferCrc8.crc_int64(cell_check_sum, double_int)
             self.read_tag()
-            double_value, = struct.unpack('d', struct.pack('l', double_int))
+
+            if const.SYS_BITS == 64:
+                double_value, = struct.unpack('d', struct.pack('q', double_int))
+            elif const.SYS_BITS == 32:
+                double_value, = struct.unpack('d', struct.pack('l', double_int))
+            else:
+                double_value, = struct.unpack('d', struct.pack('l', double_int))
             return (double_value, cell_check_sum)
         else:
             raise OTSClientError("Unsupported column type: " + str(column_type))
@@ -105,7 +113,7 @@ class PlainBufferCodedInputStream(object):
         self.read_tag()
 
         if not self.check_last_tag_was(TAG_CELL_NAME):
-            raise "Expect TAG_CELL_NAME but it was " + self.get_last_tag()
+            raise OTSClientError("Expect TAG_CELL_NAME but it was " + str(self.get_last_tag()))
         
         cell_check_sum = 0
         name_size = self.input_stream.read_raw_little_endian32()
@@ -235,7 +243,6 @@ class PlainBufferCodedOutputStream(object):
     def write_cell_name(self, name, cell_check_sum):
         self.write_tag(TAG_CELL_NAME)
         self.output_stream.write_raw_little_endian32(len(name))
-        #self.output_stream.write_raw_byte(name)
         self.output_stream.write_bytes(name)
         cell_check_sum = PlainBufferCrc8.crc_string(cell_check_sum, name)
         return cell_check_sum
@@ -254,14 +261,18 @@ class PlainBufferCodedOutputStream(object):
             self.output_stream.write_raw_little_endian32(1)
             self.output_stream.write_raw_byte(VT_AUTO_INCREMENT)
             cell_check_sum = PlainBufferCrc8.crc_int8(cell_check_sum, VT_AUTO_INCREMENT)
-        elif isinstance(value, int) or isinstance(value, long):
+        elif isinstance(value, int):
             self.output_stream.write_raw_little_endian32(1 + const.LITTLE_ENDIAN_64_SIZE)
             self.output_stream.write_raw_byte(VT_INTEGER)
             self.output_stream.write_raw_little_endian64(value)
             cell_check_sum = PlainBufferCrc8.crc_int8(cell_check_sum, VT_INTEGER)
             cell_check_sum = PlainBufferCrc8.crc_int64(cell_check_sum, value)
-        elif isinstance(value, str) or isinstance(value, unicode):
-            string_value = value
+        elif isinstance(value, six.text_type) or isinstance(value, six.binary_type):
+            if isinstance(value, six.text_type):
+                string_value = value.encode('utf-8')
+            else:
+                string_value = value
+                
             prefix_length = const.LITTLE_ENDIAN_32_SIZE + 1
             self.output_stream.write_raw_little_endian32(prefix_length + len(string_value))
             self.output_stream.write_raw_byte(VT_STRING)
@@ -281,7 +292,7 @@ class PlainBufferCodedOutputStream(object):
 
             cell_check_sum = PlainBufferCrc8.crc_int8(cell_check_sum, VT_BLOB)
             cell_check_sum = PlainBufferCrc8.crc_int32(cell_check_sum, len(binary_value))
-            cell_check_sum = PlainBufferCrc8.crc_string(cell_check_sum, binary_value.decode("utf-8")) 
+            cell_check_sum = PlainBufferCrc8.crc_string(cell_check_sum, binary_value.decode("utf-8"))
         else:
             raise OTSClientError("Unsupported primary key type: " + type(value)) 
         return cell_check_sum
@@ -297,13 +308,15 @@ class PlainBufferCodedOutputStream(object):
                 cell_check_sum = PlainBufferCrc8.crc_int8(cell_check_sum, 1)
             else:
                 cell_check_sum = PlainBufferCrc8.crc_int8(cell_check_sum, 0)
-        elif isinstance(value, int) or isinstance(value, long):
+        elif isinstance(value, int):
             self.output_stream.write_raw_little_endian32(1 + LITTLE_ENDIAN_64_SIZE)
             self.output_stream.write_raw_byte(VT_INTEGER)
             self.output_stream.write_raw_little_endian64(value)
             cell_check_sum = PlainBufferCrc8.crc_int8(cell_check_sum, VT_INTEGER)
             cell_check_sum = PlainBufferCrc8.crc_int64(cell_check_sum, value)
-        elif isinstance(value, str) or isinstance(value, unicode):
+        elif isinstance(value, six.text_type) or isinstance(value, six.binary_type):
+            if isinstance(value, six.text_type):
+                value = value.encode('utf-8')
             prefix_length = LITTLE_ENDIAN_32_SIZE + 1 
             self.output_stream.write_raw_little_endian32(prefix_length + len(value)) 
             self.output_stream.write_raw_byte(VT_STRING)
@@ -322,24 +335,31 @@ class PlainBufferCodedOutputStream(object):
             cell_check_sum = PlainBufferCrc8.crc_int32(cell_check_sum, len(value))
             cell_check_sum = PlainBufferCrc8.crc_string(cell_check_sum, value.decode("utf-8"))
         elif isinstance(value, float):
-            double_in_long, = struct.unpack("l", struct.pack("d", value))
+            if const.SYS_BITS == 64:
+                double_in_long, = struct.unpack("q", struct.pack("d", value))
+            elif const.SYS_BITS == 32:
+                double_in_long, = struct.unpack("l", struct.pack("d", value))
+            else:
+                double_in_long, = struct.unpack("l", struct.pack("d", value))
             self.output_stream.write_raw_little_endian32(1 + LITTLE_ENDIAN_64_SIZE)
             self.output_stream.write_raw_byte(VT_DOUBLE)
             self.output_stream.write_double(value)
             cell_check_sum = PlainBufferCrc8.crc_int8(cell_check_sum, VT_DOUBLE)
             cell_check_sum = PlainBufferCrc8.crc_int64(cell_check_sum, double_in_long)
         else:
-            raise OTSClientError("Unsupported column type: " + type(value))
+            raise OTSClientError("Unsupported column type: " + str(type(value)))
         return cell_check_sum
 
     def write_column_value(self, value):
         if isinstance(value, bool):
             self.output_stream.write_raw_byte(VT_BOOLEAN)
             self.output_stream.write_boolean(value)
-        elif isinstance(value, int) or isinstance(value, long):
+        elif isinstance(value, int):
             self.output_stream.write_raw_byte(VT_INTEGER)
             self.output_stream.write_raw_little_endian64(value)
-        elif isinstance(value, str) or isinstance(value, unicode):
+        elif isinstance(value, six.text_type) or isinstance(value, six.binary_type):
+            if isinstance(value, six.text_type):
+                value = value.encode('utf-8')
             self.output_stream.write_raw_byte(VT_STRING)
             self.output_stream.write_raw_little_endian32(len(value))
             self.output_stream.write_bytes(value)
@@ -351,7 +371,7 @@ class PlainBufferCodedOutputStream(object):
             self.output_stream.write_raw_byte(VT_DOUBLE)
             self.output_stream.write_double(value)
         else:
-            raise OTSClientError("Unsupported column type: " + str(value.GetType()))
+            raise OTSClientError("Unsupported column type: " + str(type(value)))
 
     def write_primary_key_column(self, pk_name, pk_value, row_check_sum):
         cell_check_sum = 0
@@ -434,15 +454,17 @@ class PlainBufferCodedOutputStream(object):
     def write_update_columns(self, attribute_columns, row_check_sum):
         if len(attribute_columns) != 0:
             self.write_tag(TAG_ROW_DATA)
-            for update_type in attribute_columns.keys():
+            for update_type in list(attribute_columns.keys()):
                 columns = attribute_columns[update_type]
                 for column in columns:
-                    if isinstance(column, str) or isinstance(column, unicode):
+                    if isinstance(column, six.text_type) or isinstance(column, six.binary_type):
                         row_check_sum = self.write_update_column(update_type, column, None, row_check_sum)
                     elif len(column) == 2:
                         row_check_sum = self.write_update_column(update_type, column[0], (column[1], None), row_check_sum)
                     elif len(column) == 3:
                         row_check_sum = self.write_update_column(update_type, column[0], (column[1], column[2]), row_check_sum)
+                    else:
+                        raise OTSClientError("Unsupported column format: " + str(column))
         return row_check_sum
 
     def write_delete_marker(self, row_checksum):

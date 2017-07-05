@@ -4,7 +4,7 @@
 __all__ = ['OTSClient']
 
 import sys
-import urlparse
+import six
 import time
 import _strptime
 
@@ -15,6 +15,11 @@ except ImportError:
     class NullHandler(logging.Handler):
         def emit(self, record):
             pass
+
+try:
+    import urlparse 
+except ImportError:
+    import urllib.parse as urlparse
 
 from tablestore.error import *
 from tablestore.protocol import OTSProtocol
@@ -74,7 +79,6 @@ class OTSClient(object):
         """
 
         self._validate_parameter(end_point, access_key_id, access_key_secret, instance_name)
-
         sts_token = kwargs.get('sts_token')
 
         self.encoding = kwargs.get('encoding')
@@ -113,7 +117,12 @@ class OTSClient(object):
 
         # intialize protocol instance via user configuration
         self.protocol = self.protocol_class(
-            access_key_id, access_key_secret, sts_token, instance_name, self.encoding, self.logger
+            access_key_id,
+            access_key_secret, 
+            sts_token,
+            instance_name, 
+            self.encoding, 
+            self.logger
         )
         
         # initialize connection via user configuration
@@ -603,6 +612,4 @@ class OTSClient(object):
         if instance_name is None or len(instance_name) == 0:
             raise OTSClientError('instance_name is None or empty.')
 
-
-        
 

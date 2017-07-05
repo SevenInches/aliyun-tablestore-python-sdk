@@ -1,7 +1,11 @@
 # -*- coding: utf8 -*-
 
-import httplib
 import time
+
+try:
+    import httplib
+except ImportError:
+    import http.client
 
 from urllib3.poolmanager import PoolManager
 from urllib3.connectionpool import HTTPConnectionPool

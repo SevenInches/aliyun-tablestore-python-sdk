@@ -279,15 +279,13 @@ class SingleColumnCondition(ColumnCondition):
         return self.latest_version_only
 
     def set_column_name(self, column_name):
-        if not isinstance(latest_version_only, str):
+        if not isinstance(latest_version_only, (six.text_type, six.binary_type)):
             raise OTSClientError(
-                "The input column_name of SingleColumnCondition should be an instance of str, not %s"%
-                latest_version_only.__class__.__name__
-            )
-
+                    "The input column_name of SingleColumnCondition should be an instance of str, not %s"%
+                    latest_version_only.__class__.__name__
+                    )
         if column_name is None:
             raise OTSClientError("The input column_name of SingleColumnCondition should not be None")
-            
         self.column_name = column_name
 
     def get_column_name(self):
@@ -451,7 +449,7 @@ class BatchGetRowResponse(object):
     def get_result(self):
         succ = []
         fail = []
-        for rows in self.items.values():
+        for rows in list(self.items.values()):
             for row in rows:
                 if row.is_ok:
                     succ.append(row)
@@ -505,7 +503,7 @@ class BatchWriteRowResponse(object):
         self.table_of_update = {}
         self.table_of_delete = {}
         
-        for table_name in response.keys():
+        for table_name in list(response.keys()):
             put_list = []
             update_list = []
             delete_list = []
@@ -526,7 +524,7 @@ class BatchWriteRowResponse(object):
         succ = []
         fail = []
 
-        for rows in self.table_of_put.values():
+        for rows in list(self.table_of_put.values()):
             for row in rows:
                 if row.is_ok:
                     succ.append(row)
@@ -552,7 +550,7 @@ class BatchWriteRowResponse(object):
         succ = []
         fail = []
 
-        for rows in self.table_of_update.values():
+        for rows in list(self.table_of_update.values()):
             for row in rows:
                 if row.is_ok:
                     succ.append(row)
@@ -578,7 +576,7 @@ class BatchWriteRowResponse(object):
         succ = []
         fail = []
 
-        for rows in self.table_of_delete.values():
+        for rows in list(self.table_of_delete.values()):
             for row in rows:
                 if row.is_ok:
                     succ.append(row)
