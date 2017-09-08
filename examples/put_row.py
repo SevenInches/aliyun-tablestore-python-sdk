@@ -27,7 +27,6 @@ def put_row(client):
                          ('female', False), ('age', 29.7)]
     row = Row(primary_key, attribute_columns)
 
-    row.attribute_columns = [('name','John'), ('mobile',15100000000), ('address','China'), ('age',25)]
     condition = Condition(RowExistenceExpectation.EXPECT_NOT_EXIST, SingleColumnCondition("age", 20, ComparatorType.EQUAL))
     consumed, return_row = client.put_row(table_name, row, condition)
     print (u'Write succeed, consume %s write cu.' % consumed.write)

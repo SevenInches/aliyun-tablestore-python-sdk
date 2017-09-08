@@ -218,7 +218,7 @@ class OTSProtoBufferEncoder(object):
         if not isinstance(column_condition, ColumnCondition):
             raise OTSClientError(
                 "column condition should be an instance of ColumnCondition, not %s" %
-                condition.__class__.__name__
+                column_condition.__class__.__name__
             )
 
         # type
