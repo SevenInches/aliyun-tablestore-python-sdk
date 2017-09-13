@@ -34,6 +34,7 @@ def put_row(client):
     consumed, return_row = client.put_row(table_name, row)
     print ('Write succeed, consume %s write cu.' % consumed.write)
 
+    row.attribute_columns = [('name','John'), ('mobile',15100000000), ('address','China'), ('age',25)]
     consumed, return_row = client.put_row(table_name, row, return_type = ReturnType.RT_PK)
     print ('Write succeed, consume %s write cu.' % consumed.write)
     print ('Primary key:%s' % return_row.primary_key)

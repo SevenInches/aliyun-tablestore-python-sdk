@@ -41,7 +41,7 @@ class OTSClient(object):
     protocol_class = OTSProtocol
     connection_pool_class = ConnectionPool 
 
-    def __init__(self, end_point, access_key_id, access_key_secret, instance_name, sts_token = None, **kwargs):
+    def __init__(self, end_point, access_key_id, access_key_secret, instance_name, **kwargs):
         """
         初始化``OTSClient``实例。
 
@@ -74,6 +74,8 @@ class OTSClient(object):
         """
 
         self._validate_parameter(end_point, access_key_id, access_key_secret, instance_name)
+
+        sts_token = kwargs.get('sts_token')
 
         self.encoding = kwargs.get('encoding')
         if self.encoding is None:
