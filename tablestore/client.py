@@ -53,6 +53,8 @@ class OTSClient(object):
 
         ``instance_name``是要访问的实例名，通过官方网站控制台创建或通过管理员获取。
 
+        ``sts_token``是访问OTS服务的STS token，从STS服务获取，具有有效期，过期后需要重新获取。
+
         ``encoding``请求参数的字符串编码类型，默认是utf8。
 
         ``socket_timeout``是连接池中每个连接的Socket超时，单位为秒，可以为int或float。默认值为50。
@@ -70,6 +72,10 @@ class OTSClient(object):
 
             client = OTSClient('your_instance_endpoint', 'your_user_id', 'your_user_key', 'your_instance_name')
         """
+
+        self._validate_parameter(end_point, access_key_id, access_key_secret, instance_name)
+
+        sts_token = kwargs.get('sts_token')
 
         self.encoding = kwargs.get('encoding')
         if self.encoding is None:
@@ -107,7 +113,7 @@ class OTSClient(object):
 
         # intialize protocol instance via user configuration
         self.protocol = self.protocol_class(
-            access_key_id, access_key_secret, instance_name, self.encoding, self.logger
+            access_key_id, access_key_secret, sts_token, instance_name, self.encoding, self.logger
         )
         
         # initialize connection via user configuration
@@ -244,7 +250,7 @@ class OTSClient(object):
         return self._request_helper('DescribeTable', table_name)
 
     def get_row(self, table_name, primary_key, columns_to_get=None, 
-                column_filter=None, max_version=None, time_range=None,
+                column_filter=None, max_version=1, time_range=None,
                 start_column=None, end_column=None, token=None):
         """
         说明：获取一行数据。
@@ -454,7 +460,7 @@ class OTSClient(object):
                   columns_to_get=None, 
                   limit=None, 
                   column_filter=None,
-                  max_version=None,
+                  max_version=1,
                   time_range=None,
                   start_column=None,
                   end_column=None,
@@ -509,7 +515,7 @@ class OTSClient(object):
                    columns_to_get=None, 
                    count=None,
                    column_filter=None,
-                   max_version=None, 
+                   max_version=1, 
                    time_range=None,
                    start_column=None,
                    end_column=None,
@@ -581,4 +587,21 @@ class OTSClient(object):
                     left_count -= 1
                     if left_count <= 0:
                         return 
+
+
+    def _validate_parameter(self, endpoint, access_key_id, access_key_secret, instance_name):
+        if endpoint is None or len(endpoint) == 0:
+            raise OTSClientError('endpoint is None or empty.')
+
+        if access_key_id is None or len(access_key_id) == 0:
+            raise OTSClientError('access_key_id is None or empty.')
+
+        if access_key_secret is None or len(access_key_secret) == 0:
+            raise OTSClientError('access_key_secret is None or empty.')
+
+        if instance_name is None or len(instance_name) == 0:
+            raise OTSClientError('instance_name is None or empty.')
+
+
+        
 

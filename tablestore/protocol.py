@@ -51,9 +51,10 @@ class OTSProtocol(object):
         'GetRange'
     ]
 
-    def __init__(self, user_id, user_key, instance_name, encoding, logger):
+    def __init__(self, user_id, user_key, sts_token, instance_name, encoding, logger):
         self.user_id = user_id
         self.user_key = user_key
+        self.sts_token = sts_token
         self.instance_name = instance_name
         self.encoder = self.encoder_class(encoding)
         self.decoder = self.decoder_class(encoding)
@@ -91,7 +92,6 @@ class OTSProtocol(object):
 
         md5 = base64.b64encode(hashlib.md5(body).digest())
 
-        #date = datetime.datetime.utcnow().isoformat()
         date = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.000Z')
         
         headers = {
@@ -101,6 +101,9 @@ class OTSProtocol(object):
             'x-ots-instancename' : self.instance_name,
             'x-ots-contentmd5' : md5,
         }
+
+        if self.sts_token != None:
+            headers['x-ots-ststoken'] = self.sts_token
 
         signature = self._make_request_signature(query, headers)
         headers['x-ots-signature'] = signature
