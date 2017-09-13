@@ -23,7 +23,7 @@ def delete_table(client):
 
 def put_row(client):
     primary_key = [('gid',1), ('uid',101)]
-    attribute_columns = [('name','John'), ('mobile',15100000000), ('address', bytearray('China')), 
+    attribute_columns = [('name','萧峰'), ('mobile',15100000000), ('address', bytearray('China')), 
                          ('female', False), ('age', 29.7)]
     row = Row(primary_key, attribute_columns)
 
@@ -32,7 +32,7 @@ def put_row(client):
     print (u'Write succeed, consume %s write cu.' % consumed.write)
 
 if __name__ == '__main__':
-    client = OTSClient(OTS_ENDPOINT, OTS_ID, OTS_SECRET, OTS_INSTANCE, retry_policy = WriteRetryPolicy())
+    client = OTSClient(OTS_ENDPOINT, OTS_ID, OTS_SECRET, OTS_INSTANCE, sts_token = OTS_STS_TOKEN, retry_policy = WriteRetryPolicy())
     try:
         delete_table(client)
     except:
