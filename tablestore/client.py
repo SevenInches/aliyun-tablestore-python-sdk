@@ -288,7 +288,7 @@ class OTSClient(object):
         ``table_name``是对应的表名。
         ``row``是行数据，包括主键和属性列。
         ``condition``表示执行操作前做条件检查，满足条件才执行，是tablestore.metadata.Condition类的实例。
-        目前只支持对行的存在性进行检查，检查条件包括：'IGNORE'，'EXPECT_EXIST'和'EXPECT_NOT_EXIST'。
+        目前支持两种条件检测，一是对行的存在性进行检查，检查条件包括：'IGNORE'，'EXPECT_EXIST'和'EXPECT_NOT_EXIST';二是对属性列值的条件检测。
         ``return_type``表示返回类型，是tablestore.metadata.ReturnType类的实例，目前仅支持返回PrimaryKey，一般用于主键列自增中。
 
         返回：本次操作消耗的CapacityUnit和需要返回的行数据。
@@ -316,7 +316,7 @@ class OTSClient(object):
         ``table_name``是对应的表名。
         ``row``表示更新的行数据，包括主键列和属性列，主键列是list；属性列是dict。
         ``condition``表示执行操作前做条件检查，满足条件才执行，是tablestore.metadata.Condition类的实例。
-        目前只支持对行的存在性进行检查，检查条件包括：'IGNORE'，'EXPECT_EXIST'和'EXPECT_NOT_EXIST'。
+        目前支持两种条件检测，一是对行的存在性进行检查，检查条件包括：'IGNORE'，'EXPECT_EXIST'和'EXPECT_NOT_EXIST';二是对属性列值的条件检测。
         ``return_type``表示返回类型，是tablestore.metadata.ReturnType类的实例，目前仅支持返回PrimaryKey，一般用于主键列自增中。
 
         返回：本次操作消耗的CapacityUnit和需要返回的行数据return_row
@@ -348,7 +348,7 @@ class OTSClient(object):
         ``table_name``是对应的表名。
         ``row``表示行数据，在delete_row仅包含主键。
         ``condition``表示执行操作前做条件检查，满足条件才执行，是tablestore.metadata.Condition类的实例。
-        目前只支持对行的存在性进行检查，检查条件包括：'IGNORE'，'EXPECT_EXIST'和'EXPECT_NOT_EXIST'。
+        目前支持两种条件检测，一是对行的存在性进行检查，检查条件包括：'IGNORE'，'EXPECT_EXIST'和'EXPECT_NOT_EXIST';二是对属性列值的条件检测。
 
         返回：本次操作消耗的CapacityUnit和需要返回的行数据return_row
 
@@ -486,13 +486,14 @@ class OTSClient(object):
         ``consumed``表示本次操作消耗的CapacityUnit，是tablestore.metadata.CapacityUnit类的实例。
         ``next_start_primary_key``表示下次get_range操作的起始点的主健列，类型为dict。
         ``row_list``表示本次操作返回的行数据列表，格式为：[Row, ...]。
+        ``next_token``表示最后一行是否还有属性列没有读完，如果next_token不为None，则表示还有，下次get_range需要填充此值。
 
         示例：
 
             inclusive_start_primary_key = [('gid',1), ('uid',INF_MIN)] 
             exclusive_end_primary_key = [('gid',4), ('uid',INF_MAX)] 
             columns_to_get = ['name', 'address', 'mobile', 'age']
-            consumed, next_start_primary_key, row_list = client.get_range(
+            consumed, next_start_primary_key, row_list, next_token = client.get_range(
                         'myTable', 'FORWARD', 
                         inclusive_start_primary_key, exclusive_end_primary_key,
                         columns_to_get, 100
