@@ -368,9 +368,29 @@ class OTSProtoBufferEncoder(object):
                 % table_options.__class__.__name__
             )
 
-        proto.time_to_live = table_options.time_to_live
-        proto.max_versions = table_options.max_version
-        proto.deviation_cell_version_in_sec = table_options.max_time_deviation
+        if table_options.time_to_live is not None:
+            if not isinstance(table_options.time_to_live, int):
+                raise OTSClientError(
+                    "table_option should be an instance of TableOptions, not %s" 
+                    % table_options.time_to_live.__class__.__name__
+                    )   
+            proto.time_to_live = table_options.time_to_live
+
+        if table_options.max_version is not None:
+            if not isinstance(table_options.time_to_live, int):
+                raise OTSClientError(
+                    "table_option should be an instance of TableOptions, not %s" 
+                    % table_options.max_version.__class__.__name__
+                    )   
+            proto.max_versions = table_options.max_version
+
+        if table_options.max_time_deviation is not None:
+            if not isinstance(table_options.time_to_live, int):
+                raise OTSClientError(
+                    "table_option should be an instance of TableOptions, not %s" 
+                    % table_options.max_time_deviation.__class__.__name__
+                    )   
+            proto.deviation_cell_version_in_sec = table_options.max_time_deviation
 
     def _make_capacity_unit(self, proto, capacity_unit):
 
@@ -541,8 +561,10 @@ class OTSProtoBufferEncoder(object):
     def _encode_update_table(self, table_name, table_options, reserved_throughput):
         proto = pb2.UpdateTableRequest()
         proto.table_name = self._get_unicode(table_name)
-        self._make_update_reserved_throughput(proto.reserved_throughput, reserved_throughput)
-        self._make_table_options(proto.table_options, table_options)
+        if reserved_throughput is not None:
+            self._make_update_reserved_throughput(proto.reserved_throughput, reserved_throughput)
+        if table_options is not None:
+            self._make_table_options(proto.table_options, table_options)
         return proto
 
     def _encode_describe_table(self, table_name):

@@ -209,7 +209,7 @@ class OTSClient(object):
 
         return self._request_helper('ListTable')
 
-    def update_table(self, table_name, table_options, reserved_throughput):
+    def update_table(self, table_name, table_options = None, reserved_throughput = None):
         """ 
         说明：更新表属性，目前只支持修改预留读写吞吐量。
         
