@@ -371,23 +371,23 @@ class OTSProtoBufferEncoder(object):
         if table_options.time_to_live is not None:
             if not isinstance(table_options.time_to_live, int):
                 raise OTSClientError(
-                    "table_option should be an instance of TableOptions, not %s" 
+                    "time_to_live should be an instance of int, not %s" 
                     % table_options.time_to_live.__class__.__name__
                     )   
             proto.time_to_live = table_options.time_to_live
 
         if table_options.max_version is not None:
-            if not isinstance(table_options.time_to_live, int):
+            if not isinstance(table_options.max_version, int):
                 raise OTSClientError(
-                    "table_option should be an instance of TableOptions, not %s" 
+                    "max_version should be an instance of int, not %s" 
                     % table_options.max_version.__class__.__name__
                     )   
             proto.max_versions = table_options.max_version
 
         if table_options.max_time_deviation is not None:
-            if not isinstance(table_options.time_to_live, int):
+            if not isinstance(table_options.max_time_deviation, int):
                 raise OTSClientError(
-                    "table_option should be an instance of TableOptions, not %s" 
+                    "max_time_deviation should be an instance of TableOptions, not %s" 
                     % table_options.max_time_deviation.__class__.__name__
                     )   
             proto.deviation_cell_version_in_sec = table_options.max_time_deviation
