@@ -165,7 +165,7 @@ class OTSProtoBufferEncoder(object):
         else:
             raise OTSClientError(
                 "primary_key_type should be one of [%s], not %s" % (
-                    ", ".join(list(enum_map.keys())), str(type_str)
+                    ", ".join(sorted(list(enum_map.keys()))), str(type_str)
                 )
             )
 

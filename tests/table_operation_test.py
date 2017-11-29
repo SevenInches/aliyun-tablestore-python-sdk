@@ -177,7 +177,7 @@ class TableOperationTest(APITestBase):
             except OTSServiceError as e:
                 self.assert_error(e, 400, "OTSParameterInvalid", pk_schema[i][1] + " is an invalid type for the primary key.")
             except OTSClientError as e:
-                self.assert_equal("primary_key_type should be one of [INTEGER, STRING, BINARY], not DOUBLE", str(e))
+                self.assert_equal("primary_key_type should be one of [BINARY, INTEGER, STRING], not DOUBLE", str(e))
             self.assert_equal(False, table_name in self.client_test.list_table())
 
     def test_create_table_again(self):
