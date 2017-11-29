@@ -1,6 +1,8 @@
 # -*- coding: utf8 -*-
 
+import six
 import struct
+from builtins import int
 from tablestore.error import *
 
 class PlainBufferInputStream(object):
@@ -32,7 +34,10 @@ class PlainBufferInputStream(object):
 
         pos = self.cur_pos
         self.cur_pos += 1
-        return bytes(self.buffer[pos])
+        if isinstance(self.buffer[pos], int):
+            return chr(self.buffer[pos])
+        else:
+            return self.buffer[pos]
 
     def read_raw_little_endian64(self):
         return struct.unpack('<q', self.read_bytes(8))[0]
@@ -65,6 +70,8 @@ class PlainBufferInputStream(object):
             raise OTSClientError("Read UTF string encountered EOF.")
         utf_str = self.buffer[self.cur_pos:self.cur_pos + size]
         self.cur_pos += size
+        if isinstance(utf_str, six.binary_type):
+            utf_str = utf_str.decode('utf-8')
         return utf_str
 
         
@@ -108,4 +115,6 @@ class PlainBufferOutputStream(object):
     def write_bytes(self, value):
         if len(self.buffer) + len(value) > self.capacity:
             raise OTSClientError("The buffer is full.")
+        if isinstance(value, six.text_type):
+            value = value.encode('utf-8')
         self.buffer += bytearray(value)
