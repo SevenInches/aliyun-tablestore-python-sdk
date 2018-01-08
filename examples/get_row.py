@@ -28,7 +28,7 @@ def put_row(client):
 
 def get_row(client):
     primary_key = [('uid',1), ('gid',101)]
-    columns_to_get = ['name', 'growth', 'type'] # given a list of columns to get, or empty list if you want to get entire row.
+    columns_to_get = [] # given a list of columns to get, or empty list if you want to get entire row.
 
     cond = CompositeColumnCondition(LogicalOperator.AND)
     cond.add_sub_condition(SingleColumnCondition("growth", 0.9, ComparatorType.NOT_EQUAL))
